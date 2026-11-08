@@ -3,7 +3,8 @@ const SITE = {
   brand: "Tarot With Himu",
   url: "https://tarotwithhimu.com/",
   utm: "?utm_source=chakra-app&utm_medium=promo&utm_campaign=chakra-reading",
-  whatsapp: "" // e.g. "https://wa.me/91XXXXXXXXXX" - shows a second button when filled
+  whatsapp: "https://wa.me/916901529861",
+  phoneDisplay: "+91 69015 29861"
 };
 
 const PROMO = {

@@ -1,6 +1,6 @@
 const UI = {
   en: {
-    title: "Chakra · Learn & Balance",
+    title: "7 Chakras Guide: Learn & Balance",
     subtitle: "Root · Sacral · Solar Plexus · Heart · Throat · Brow · Crown",
     search: "Search chakras, crystals, organs…",
     empty: "No chakras match your search.",
