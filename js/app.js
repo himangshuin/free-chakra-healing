@@ -40,7 +40,7 @@ function renderCards(){
   const html = chakras.map((ch,i) => {
     if (!matches(ch,q)) return "";
     const first = ch.affirmation[lang].split("/")[0].trim();
-    return `<button class="card" style="--c:${ch.color}" data-i="${i}">
+    return `<button class="card" style="--c:${ch.color};--i:${i}" data-i="${i}">
       <div class="num">${num(i+1)}</div>
       <h3>${ch.name[lang]} <span class="sk">${ch.sanskrit}</span></h3>
       <div class="tags"><span class="tag">${L.element}: ${ch.element[lang]}</span><span class="tag">${L.color}: ${ch.colorName[lang]}</span></div>
@@ -60,7 +60,7 @@ function renderModal(){
   let body = "";
   if (tab === 0){
     const lines = ch.affirmation[lang].split("/").map(s => s.trim()).filter(Boolean);
-    body += section(lb.affirmation, `<div class="affbox">${lines.map(l => `<span>“${l}”</span>`).join("")}</div>`);
+    body += section(lb.affirmation, `<div class="affbox">${lines.map(l => `<span>“${l}”</span>`).join("")}</div><div class="acts"><button class="btn ghost sm" id="copyAff">📋 ${ACT[lang].copy}</button><button class="btn ghost sm" id="shareBtn">🔗 ${ACT[lang].share}</button></div>`);
     body += section(lb.crystals, `<div class="chips">${ch.crystals.map(c => `<span class="chip">💎 ${c}</span>`).join("")}</div>`);
     body += section(lb.remarks, `${ch.blockedBy[lang] ? `<span class="blocked">⛔ ${ch.blockedBy[lang]}</span><br>` : ""}<p class="remarks">${ch.remarks[lang]}</p>`);
   } else if (tab === 1){
@@ -83,7 +83,7 @@ function renderModal(){
         <button class="iconbtn" id="mClose" aria-label="${lb.close}">✕</button>
       </div>
     </div>
-    <div class="tabs" role="tablist">${L.tabs.map((t,i) => `<button role="tab" aria-selected="${i===tab}" data-t="${i}">${t}</button>`).join("")}</div>
+    <div class="mdots" aria-hidden="true">${chakras.map((c,j) => `<i class="${j===openIdx?"on":""}" style="--c:${c.color}" data-j="${j}"></i>`).join("")}</div><div class="tabs" role="tablist">${L.tabs.map((t,i) => `<button role="tab" aria-selected="${i===tab}" data-t="${i}">${t}</button>`).join("")}</div>
     <div class="mbody" id="mBody">${body}${modalPromo(ch)}</div>`;
 }
 
@@ -149,34 +149,84 @@ document.addEventListener("keydown", e => {
 });
 
 $("rainbow").innerHTML = chakras.map(c => `<i style="background:${c.color}"></i>`).join("");
-renderUI(); renderCards();
 
-/* ---------- promo / FAQ ---------- */
+/* ---------- promo / FAQ / extras ---------- */
+const WA = {
+  en: { main: "Hi Himu, I’d like to book a Chakra Reading.", modal: n => `Hi Himu, I’d like a Chakra Reading. I feel my ${n} may be out of balance.` },
+  as: { main: "নমস্কাৰ হিমু, মই এটা চক্ৰ ৰিডিং বুক কৰিব বিচাৰো।", modal: n => `নমস্কাৰ হিমু, মই এটা চক্ৰ ৰিডিং বিচাৰো। মোৰ ${n} ভাৰসাম্যহীন যেন লাগিছে।` }
+};
+const ACT = {
+  en: { copy: "Copy affirmations", copied: "Copied ✓", share: "Share", explore: "Explore chakras ↓", phone: "WhatsApp" },
+  as: { copy: "নিশ্চিতি কপি কৰক", copied: "কপি হ’ল ✓", share: "শ্বেয়াৰ", explore: "চক্ৰসমূহ চাওক ↓", phone: "হোৱাটছএপ" }
+};
+const INTRO = {
+  en: "Explore the seven chakras in English and Assamese: their meaning, element, color, crystals, affirmations, and the signs of balance and imbalance. Tap a point on the body to begin.",
+  as: "সাতটা চক্ৰ ইংৰাজী আৰু অসমীয়াত অন্বেষণ কৰক: অৰ্থ, উপাদান, ৰং, স্ফটিক, নিশ্চিতি, আৰু ভাৰসাম্য-অভাৰসাম্যৰ লক্ষণ। আৰম্ভ কৰিবলৈ শৰীৰৰ এটা বিন্দুত টিপক।"
+};
+const BODY_Y = { crown: 4, brow: 16, throat: 34, heart: 56, solar: 78, sacral: 97, root: 116 };
 function promoLink(slot){ return SITE.url + SITE.utm + "&utm_content=" + slot; }
+function waLink(msg){ return SITE.whatsapp + "?text=" + encodeURIComponent(msg); }
+
+function renderBody(){
+  $("bodyMap").innerHTML = `<svg viewBox="0 0 100 150" aria-hidden="true"><defs><radialGradient id="aura"><stop offset="0" stop-color="#9b7bbf" stop-opacity=".35"/><stop offset="1" stop-color="#9b7bbf" stop-opacity="0"/></radialGradient></defs><ellipse cx="50" cy="72" rx="48" ry="72" fill="url(#aura)"/><ellipse class="sil" cx="50" cy="122" rx="44" ry="13"/><path class="sil" d="M31 38 Q50 30 69 38 L72 106 Q50 114 28 106 Z"/><circle class="sil" cx="50" cy="16" r="12"/><line x1="50" y1="4" x2="50" y2="116" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="2 3"/></svg>` +
+    chakras.map((c, i) => `<button class="dot" style="--c:${c.color};top:${BODY_Y[c.id] / 150 * 100}%" data-i="${i}" aria-label="${c.name[lang]}"><span>${c.name[lang]}</span></button>`).join("");
+}
+
 function renderPromo(){
-  const P = PROMO[lang];
+  const P = PROMO[lang], A = ACT[lang], msg = waLink(WA[lang].main);
+  $("intro").textContent = INTRO[lang];
+  $("heroWa").href = msg; $("heroWa").textContent = "💬 " + P.cta;
+  $("heroExplore").textContent = A.explore;
+  renderBody();
   const a = $("announce");
   if (a){
     a.hidden = store.get("chakra-announce") === "off";
-    a.innerHTML = `<span>${P.announce} <a href="${promoLink("topbar")}" target="_blank" rel="noopener">${P.announceCta}</a></span><button type="button" id="announceX" aria-label="${UI[lang].labels.close}">✕</button>`;
+    a.innerHTML = `<span>${P.announce} <a href="${msg}" target="_blank" rel="noopener">${P.announceCta}</a></span><button type="button" id="announceX" aria-label="${UI[lang].labels.close}">✕</button>`;
   }
   $("promo").innerHTML = `<div class="promo-in"><div>
       <span class="badge">🪷 ${P.badge}</span><h2 class="serif">${P.title}</h2><p>${P.body}</p>
       <ul>${P.points.map(x => `<li>${x}</li>`).join("")}</ul></div>
     <div class="cta-panel"><div class="dots" aria-hidden="true">${chakras.map(c => `<i style="background:${c.color}"></i>`).join("")}</div>
       <strong>${SITE.brand}</strong>
-      <a class="btn" href="${promoLink("main")}" target="_blank" rel="noopener">${P.cta}</a>
-      ${SITE.whatsapp ? `<a class="btn ghost" href="${SITE.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>` : `<a class="btn ghost" href="${promoLink("visit")}" target="_blank" rel="noopener">${P.visit}</a>`}
+      <a class="btn wa" href="${msg}" target="_blank" rel="noopener">💬 ${P.cta}</a>
+      <span class="small">${A.phone}: <a href="tel:+916901529861" style="color:inherit">${SITE.phoneDisplay}</a></span>
+      <a class="btn ghost" href="${promoLink("visit")}" target="_blank" rel="noopener">${P.visit}</a>
       <span class="small">${P.note}</span></div></div>`;
+  let fab = $("waFab");
+  if (!fab){ fab = document.createElement("a"); fab.id = "waFab"; fab.className = "fab"; fab.target = "_blank"; fab.rel = "noopener"; document.body.appendChild(fab); }
+  fab.href = msg; fab.setAttribute("aria-label", P.cta + " – WhatsApp");
+  fab.innerHTML = `<span aria-hidden="true">💬</span><b>${P.cta}</b>`;
   $("faqHeading").textContent = P.faqHeading;
   $("faqList").innerHTML = FAQ[lang].map(f => `<details><summary><h3>${f.q}</h3></summary><p>${f.a}</p></details>`).join("");
   $("foot").innerHTML = `<span>${P.footer}</span><span>${P.by} <a href="${promoLink("footer")}" target="_blank" rel="noopener">${SITE.brand}</a></span>`;
 }
 function modalPromo(ch){
   const P = PROMO[lang];
-  return `<div class="mpromo"><div><strong>${P.modalLead(ch.name[lang])}</strong><span class="small">${P.badge} · ${SITE.brand}</span></div><a class="btn" href="${promoLink("modal-" + ch.id)}" target="_blank" rel="noopener">${P.modalCta}</a></div>`;
+  return `<div class="mpromo"><div><strong>${P.modalLead(ch.name[lang])}</strong><span class="small">${P.badge} · ${SITE.brand}</span></div><a class="btn wa" href="${waLink(WA[lang].modal(ch.name[lang]))}" target="_blank" rel="noopener">💬 ${P.modalCta}</a></div>`;
 }
-document.addEventListener("click", e => { if (e.target.closest("#announceX")){ store.set("chakra-announce","off"); $("announce").hidden = true; } });
 
+document.addEventListener("click", async e => {
+  if (e.target.closest("#announceX")){ store.set("chakra-announce", "off"); $("announce").hidden = true; return; }
+  const dot = e.target.closest(".dot"); if (dot){ lastFocus = dot; openModal(+dot.dataset.i); return; }
+  const j = e.target.closest("[data-j]"); if (j){ openModal(+j.dataset.j); return; }
+  const cp = e.target.closest("#copyAff");
+  if (cp){ try { await navigator.clipboard.writeText(chakras[openIdx].affirmation[lang].split("/").map(s => s.trim()).join("\n")); cp.textContent = "✓ " + ACT[lang].copied; } catch(err){} return; }
+  const sh = e.target.closest("#shareBtn");
+  if (sh){
+    const ch = chakras[openIdx];
+    if (navigator.share){ try { await navigator.share({ title: ch.name[lang], url: location.href }); } catch(err){} }
+    else { try { await navigator.clipboard.writeText(location.href); sh.textContent = "✓ " + ACT[lang].copied; } catch(err){} }
+  }
+});
+/* swipe between chakras on touch screens */
+{ let tx = 0, ty = 0; const m = $("modal");
+  m.addEventListener("touchstart", e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  m.addEventListener("touchend", e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.abs(dx) > 80 && Math.abs(dy) < 50) step(dx < 0 ? 1 : -1); }, { passive: true }); }
+/* "/" focuses search; scroll progress bar */
+document.addEventListener("keydown", e => { if (e.key === "/" && openIdx < 0 && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); $("q").focus(); } });
+{ const sp = document.createElement("div"); sp.className = "sp"; document.body.appendChild(sp);
+  addEventListener("scroll", () => { const h = document.documentElement; sp.style.width = (h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight) * 100) + "%"; }, { passive: true }); }
+
+renderUI(); renderCards();
 /* open a chakra directly from a link like index.html#heart */
 { const k = chakras.findIndex(c => c.id === location.hash.slice(1)); if (k >= 0) openModal(k); }
